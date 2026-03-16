@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#e8eaef">
+  <title>Plano Nutricional</title>
+  <style>
+    :root {
+      --bg: #e8eaef;
+      --bg-card: #ffffff;
+      --bg-header: rgba(255,255,255,0.82);
+      --text: #1a1d2b;
+      --text-secondary: #6b7280;
+      --accent: #0d9488;
+      --accent-light: #f0fdfa;
+      --border: #e5e7eb;
+      --tier-green: #10b981;
+      --tier-green-bg: #ecfdf5;
+      --tier-yellow: #f59e0b;
+      --tier-yellow-bg: #fffbeb;
+      --tier-red: #ef4444;
+      --tier-red-bg: #fef2f2;
+      --callout-bg: #fef3c7;
+      --callout-border: #f59e0b;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+      --radius: 14px;
+      --timeline-color: #d1d5db;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .shell {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      position: relative;
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-header);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: calc(16px + env(safe-area-inset-top)) 20px 0;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      touch-action: manipulation;
+      min-height: 44px;
+      font-family: inherit;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── Tab panels ── */
+    .panel {
+      display: none;
+      padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+      animation: fadeIn 0.25s ease;
+    }
+
+    .panel.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Timeline ── */
+    .timeline {
+      position: relative;
+      padding-left: 28px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 9px;
+      top: 24px;
+      bottom: 24px;
+      width: 2px;
+      background: var(--timeline-color);
+      border-radius: 1px;
+    }
+
+    /* ── Meal Card ── */
+    .meal {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .meal-dot {
+      position: absolute;
+      left: -28px;
+      top: 18px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2.5px solid var(--timeline-color);
+      transition: border-color 0.3s, background 0.3s;
+      z-index: 1;
+    }
+
+    .meal.open .meal-dot {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .meal-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.2s, border-color 0.2s;
+      min-height: 44px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .meal.open .meal-header {
+      border-radius: var(--radius) var(--radius) 0 0;
+      border-bottom-color: transparent;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .meal-emoji { font-size: 1.3rem; flex-shrink: 0; }
+
+    .meal-info { flex: 1; min-width: 0; }
+
+    .meal-time {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .meal-name {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meal-chevron {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      color: var(--text-secondary);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .meal.open .meal-chevron { transform: rotate(180deg); }
+
+    .meal-body {
+      max-height: 0;
+      overflow: hidden;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      box-shadow: var(--shadow-lg);
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .meal.open .meal-body {
+      max-height: 600px;
+    }
+
+    .meal-content {
+      padding: 4px 16px 16px;
+    }
+
+    .meal-content ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .meal-content li {
+      font-size: 0.875rem;
+      padding: 8px 12px;
+      background: var(--accent-light);
+      border-radius: 8px;
+      line-height: 1.4;
+    }
+
+    .meal-content li .qty {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* ── Sub link ── */
+    .sub-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      padding: 4px 0;
+      border: none;
+      background: none;
+      font-family: inherit;
+      min-height: 44px;
+      touch-action: manipulation;
+    }
+
+    .sub-link svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ── Callout ── */
+    .callout {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border-left: 3.5px solid var(--callout-border);
+      background: var(--callout-bg);
+      font-size: 0.8125rem;
+      line-height: 1.45;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    /* ── Accordion (Aba 2) ── */
+    .accordion {
+      margin-bottom: 14px;
+    }
+
+    .accordion-trigger {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      font-family: inherit;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+      text-align: left;
+      min-height: 44px;
+      touch-action: manipulation;
+      transition: box-shadow 0.2s;
+    }
+
+    .accordion.open .accordion-trigger {
+      border-radius: var(--radius) var(--radius) 0 0;
+      border-bottom-color: transparent;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .accordion-trigger .meal-chevron {
+      margin-left: auto;
+    }
+
+    .accordion.open .meal-chevron { transform: rotate(180deg); }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      box-shadow: var(--shadow-lg);
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .accordion.open .accordion-body {
+      max-height: 1200px;
+    }
+
+    .accordion-content {
+      padding: 4px 16px 16px;
+    }
+
+    .accordion-hint {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      background: #e6f7f5;
+      border: 1px solid #99d5cf;
+      border-left: 3.5px solid var(--accent);
+      border-radius: 8px;
+      line-height: 1.4;
+    }
+
+    /* ── Tiers ── */
+    .tier {
+      margin-bottom: 12px;
+    }
+
+    .tier:last-child { margin-bottom: 0; }
+
+    .tier-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+
+    .tier-green .tier-label { background: var(--tier-green-bg); color: var(--tier-green); }
+    .tier-yellow .tier-label { background: var(--tier-yellow-bg); color: var(--tier-yellow); }
+    .tier-red .tier-label { background: var(--tier-red-bg); color: var(--tier-red); }
+
+    .tier-items {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .tier-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      transition: background 0.15s;
+    }
+
+    .tier-item:nth-child(odd) {
+      background: var(--accent-light);
+    }
+
+    .tier-item .item-name { flex: 1; }
+    .tier-item .item-qty {
+      font-weight: 600;
+      white-space: nowrap;
+      margin-left: 12px;
+    }
+
+    .tier-green .item-qty { color: var(--tier-green); }
+    .tier-yellow .item-qty { color: var(--tier-yellow); }
+    .tier-red .item-qty { color: var(--tier-red); }
+
+    /* ── Reminder callout in aba 2 ── */
+    .reminder {
+      margin-top: 6px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: var(--accent-light);
+      border-left: 3.5px solid var(--accent);
+      font-size: 0.8125rem;
+      line-height: 1.45;
+    }
+
+    /* ── Meal checkbox ── */
+    .meal-check {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      /* expand touch target to 44px */
+      padding: 10px;
+      margin: -10px;
+      margin-right: 0;
+    }
+
+    .meal-check input {
+      position: absolute;
+      opacity: 0;
+      width: 44px;
+      height: 44px;
+      top: -10px;
+      left: -10px;
+      cursor: pointer;
+      z-index: 2;
+      margin: 0;
+    }
+
+    .meal-check .checkmark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      transition: background 0.2s, border-color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .meal-check .checkmark svg {
+      width: 14px;
+      height: 14px;
+      stroke: white;
+      stroke-width: 3;
+      fill: none;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: opacity 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .meal-check input:checked ~ .checkmark {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .meal-check input:checked ~ .checkmark svg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .meal.done .meal-header {
+      opacity: 0.55;
+    }
+
+    .meal.done .meal-name {
+      text-decoration: line-through;
+      text-decoration-color: var(--text-secondary);
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      padding-left: 28px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .progress-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .progress-label .done-count {
+      color: var(--accent);
+    }
+
+    /* ── Misc ── */
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      padding-left: 28px;
+    }
+
+    .panel-subtitle {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <h1>Plano Nutricional 💪</h1>
+      <div class="tabs" role="tablist">
+        <button class="tab active" role="tab" aria-selected="true" data-tab="routine">Rotina Diária</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="subs">Substituições</button>
+      </div>
+    </header>
+
+    <!-- ═══ ABA 1 — Rotina Diária ═══ -->
+    <div class="panel active" id="panel-routine">
+      <p class="section-title">Suas 5 refeições</p>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <span class="progress-label"><span class="done-count" id="done-count">0</span>/5</span>
+      </div>
+      <div class="timeline">
+
+        <!-- Ref 1 -->
+        <div class="meal" data-hour="8">
+          <div class="meal-dot"></div>
+          <div class="meal-header" role="button" aria-expanded="false" tabindex="0">
+            <span class="meal-emoji">☕</span>
+            <div class="meal-info">
+              <div class="meal-time">08:00</div>
+              <div class="meal-name">Ref 1 — Café da Manhã</div>
+            </div>
+            <label class="meal-check" onclick="event.stopPropagation()">
+              <input type="checkbox" aria-label="Marcar refeição como feita">
+              <span class="checkmark"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
+            </label>
+            <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meal-body">
+            <div class="meal-content">
+              <ul>
+                <li><span class="qty">150ml</span> de iogurte (qualquer um)</li>
+                <li><span class="qty">20g</span> de Whey + <span class="qty">50g</span> de granola</li>
+                <li><span class="qty">1 col. sopa</span> de semente de girassol + <span class="qty">½ col.</span> de chia</li>
+                <li>Fruta: <span class="qty">120g</span> (peso fixo, qualquer fruta)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ref 2 -->
+        <div class="meal" data-hour="11.5">
+          <div class="meal-dot"></div>
+          <div class="meal-header" role="button" aria-expanded="false" tabindex="0">
+            <span class="meal-emoji">🏋️</span>
+            <div class="meal-info">
+              <div class="meal-time">11:30</div>
+              <div class="meal-name">Ref 2 — Pré-Treino</div>
+            </div>
+            <label class="meal-check" onclick="event.stopPropagation()">
+              <input type="checkbox" aria-label="Marcar refeição como feita">
+              <span class="checkmark"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
+            </label>
+            <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meal-body">
+            <div class="meal-content">
+              <ul>
+                <li><span class="qty">2 fatias</span> de pão de forma</li>
+                <li><span class="qty">2 col. sopa</span> de doce de leite</li>
+                <li><span class="qty">1 Banana</span> (100g)</li>
+              </ul>
+              <button class="sub-link" data-goto="frutas">
+                Ver substituições de frutas
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ref 3 -->
+        <div class="meal" data-hour="14.5">
+          <div class="meal-dot"></div>
+          <div class="meal-header" role="button" aria-expanded="false" tabindex="0">
+            <span class="meal-emoji">🍽️</span>
+            <div class="meal-info">
+              <div class="meal-time">14:30</div>
+              <div class="meal-name">Ref 3 — Almoço</div>
+            </div>
+            <label class="meal-check" onclick="event.stopPropagation()">
+              <input type="checkbox" aria-label="Marcar refeição como feita">
+              <span class="checkmark"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
+            </label>
+            <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meal-body">
+            <div class="meal-content">
+              <ul>
+                <li><span class="qty">180g</span> de Arroz</li>
+                <li><span class="qty">120g</span> de Frango</li>
+                <li><span class="qty">60g</span> de legumes</li>
+                <li><span class="qty">½ barra</span> de proteína + <span class="qty">3 cookies</span> Bauducco</li>
+              </ul>
+              <button class="sub-link" data-goto="proteinas">
+                Ver substituições de proteínas
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button class="sub-link" data-goto="carboidratos" style="display:block">
+                Ver substituições de carboidratos
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ref 4 -->
+        <div class="meal" data-hour="17.5">
+          <div class="meal-dot"></div>
+          <div class="meal-header" role="button" aria-expanded="false" tabindex="0">
+            <span class="meal-emoji">🍪</span>
+            <div class="meal-info">
+              <div class="meal-time">17:30</div>
+              <div class="meal-name">Ref 4 — Lanche da Tarde</div>
+            </div>
+            <label class="meal-check" onclick="event.stopPropagation()">
+              <input type="checkbox" aria-label="Marcar refeição como feita">
+              <span class="checkmark"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
+            </label>
+            <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meal-body">
+            <div class="meal-content">
+              <ul>
+                <li><span class="qty">1 fatia</span> de pão de forma</li>
+                <li><span class="qty">1 col. sopa</span> de doce de leite</li>
+                <li><span class="qty">20g</span> de Whey</li>
+                <li>Fruta: <span class="qty">250g</span> (peso fixo, qualquer fruta)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ref 5 -->
+        <div class="meal" data-hour="21">
+          <div class="meal-dot"></div>
+          <div class="meal-header" role="button" aria-expanded="false" tabindex="0">
+            <span class="meal-emoji">🌙</span>
+            <div class="meal-info">
+              <div class="meal-time">21:00</div>
+              <div class="meal-name">Ref 5 — Jantar</div>
+            </div>
+            <label class="meal-check" onclick="event.stopPropagation()">
+              <input type="checkbox" aria-label="Marcar refeição como feita">
+              <span class="checkmark"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
+            </label>
+            <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meal-body">
+            <div class="meal-content">
+              <ul>
+                <li><span class="qty">4 fatias</span> de pão de forma + <span class="qty">4 ovos</span> mexidos</li>
+                <li><span class="qty">250kcal</span> LIVRE — qualquer doce, sem ultrapassar o limite</li>
+              </ul>
+              <div class="callout">
+                <div class="callout-title">👵 Regra da Vó</div>
+                Se houver Panqueca, Almôndega ou Macarronada, priorize a dela e substitua os ovos/proteína por essa refeição.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ ABA 2 — Substituições ═══ -->
+    <div class="panel" id="panel-subs">
+      <p class="panel-subtitle">Tabela mestre de substituições</p>
+
+      <!-- Proteínas -->
+      <div class="accordion" id="acc-proteinas">
+        <button class="accordion-trigger" role="button" aria-expanded="false" tabindex="0">
+          <span>🥩</span> Proteínas
+          <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <p class="accordion-hint">Para substituir 120g de Frango no Almoço (Ref 3)</p>
+
+            <div class="tier tier-green">
+              <div class="tier-label">🟢 Sempre</div>
+              <ul class="tier-items">
+                <li class="tier-item"><span class="item-name">Filé de Merluza ou Pescado</span><span class="item-qty">138g</span></li>
+                <li class="tier-item"><span class="item-name">Filé de Tilápia</span><span class="item-qty">204g</span></li>
+                <li class="tier-item"><span class="item-name">Whey Protein</span><span class="item-qty">48g</span></li>
+                <li class="tier-item"><span class="item-name">Clara de Ovo</span><span class="item-qty">11 un / 384ml</span></li>
+              </ul>
+            </div>
+
+            <div class="tier tier-yellow">
+              <div class="tier-label">🟡 Aceitável</div>
+              <ul class="tier-items">
+                <li class="tier-item"><span class="item-name">Patinho</span><span class="item-qty">73g</span></li>
+                <li class="tier-item"><span class="item-name">Filé Mignon</span><span class="item-qty">120g</span></li>
+                <li class="tier-item"><span class="item-name">Picanha grelhada</span><span class="item-qty">83g</span></li>
+                <li class="tier-item"><span class="item-name">Costela de boi</span><span class="item-qty">91g</span></li>
+                <li class="tier-item"><span class="item-name">Sobrecoxa sem pele</span><span class="item-qty">96g</span></li>
+              </ul>
+            </div>
+
+            <div class="tier tier-red">
+              <div class="tier-label">🔴 Raramente</div>
+              <ul class="tier-items">
+                <li class="tier-item"><span class="item-name">Salmão cru</span><span class="item-qty">132g</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carboidratos -->
+      <div class="accordion" id="acc-carboidratos">
+        <button class="accordion-trigger" role="button" aria-expanded="false" tabindex="0">
+          <span>🍚</span> Carboidratos
+          <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <p class="accordion-hint">Para substituir 180g de Arroz no Almoço (Ref 3)</p>
+
+            <div class="tier tier-green">
+              <div class="tier-label">🟢 Sempre</div>
+              <ul class="tier-items">
+                <li class="tier-item"><span class="item-name">Macarrão</span><span class="item-qty">144g</span></li>
+                <li class="tier-item"><span class="item-name">Batata Doce</span><span class="item-qty">324g</span></li>
+                <li class="tier-item"><span class="item-name">Batata Inglesa</span><span class="item-qty">459g</span></li>
+                <li class="tier-item"><span class="item-name">Mandioca</span><span class="item-qty">144g</span></li>
+                <li class="tier-item"><span class="item-name">Arroz Integral</span><span class="item-qty">216g</span></li>
+                <li class="tier-item"><span class="item-name">Aveia em flocos</span><span class="item-qty">72g</span></li>
+                <li class="tier-item"><span class="item-name">Goma de Tapioca</span><span class="item-qty">63g</span></li>
+                <li class="tier-item"><span class="item-name">Pão de Forma</span><span class="item-qty">4 fatias</span></li>
+              </ul>
+            </div>
+
+            <div class="tier tier-yellow">
+              <div class="tier-label">🟡 Aceitável</div>
+              <ul class="tier-items">
+                <li class="tier-item"><span class="item-name">Doce de Leite Light</span><span class="item-qty">99g</span></li>
+                <li class="tier-item"><span class="item-name">Pão Francês</span><span class="item-qty">54g</span></li>
+                <li class="tier-item"><span class="item-name">Pão de Queijo</span><span class="item-qty">144g</span></li>
+                <li class="tier-item"><span class="item-name">Pão de Hambúrguer</span><span class="item-qty">104g</span></li>
+                <li class="tier-item"><span class="item-name">Granola</span><span class="item-qty">72g</span></li>
+                <li class="tier-item"><span class="item-name">Milho de Pipoca (Grão)</span><span class="item-qty">72g</span></li>
+                <li class="tier-item"><span class="item-name">Sucrilhos</span><span class="item-qty">63g</span></li>
+              </ul>
+            </div>
+
+            <div class="tier tier-red">
+              <div class="tier-label">🔴 Raramente</div>
+              <ul class="tier-items">
+                <li class="tier-item"><span class="item-name">Bolo de Chocolate</span><span class="item-qty">90g</span></li>
+                <li class="tier-item"><span class="item-name">Açaí</span><span class="item-qty">90g</span></li>
+                <li class="tier-item"><span class="item-name">Biscoito Recheado</span><span class="item-qty">72g</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frutas -->
+      <div class="accordion" id="acc-frutas">
+        <button class="accordion-trigger" role="button" aria-expanded="false" tabindex="0">
+          <span>🍎</span> Frutas
+          <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <p class="accordion-hint">Substituições para a Banana (100g) da Ref 2 — Pré-Treino</p>
+
+            <div class="tier tier-green">
+              <div class="tier-label">🟢 Opções</div>
+              <ul class="tier-items">
+                <li class="tier-item"><span class="item-name">Maçã</span><span class="item-qty">180g</span></li>
+                <li class="tier-item"><span class="item-name">Abacaxi</span><span class="item-qty">185g</span></li>
+                <li class="tier-item"><span class="item-name">Morango</span><span class="item-qty">15 un</span></li>
+                <li class="tier-item"><span class="item-name">Uva</span><span class="item-qty">170g</span></li>
+                <li class="tier-item"><span class="item-name">Kiwi</span><span class="item-qty">150g</span></li>
+                <li class="tier-item"><span class="item-name">Tangerina</span><span class="item-qty">200g</span></li>
+                <li class="tier-item"><span class="item-name">Laranja</span><span class="item-qty">200g</span></li>
+                <li class="tier-item"><span class="item-name">Maracujá</span><span class="item-qty">100g</span></li>
+                <li class="tier-item"><span class="item-name">Açaí Zero</span><span class="item-qty">150g</span></li>
+              </ul>
+            </div>
+
+            <div class="reminder">
+              <strong>Lembrete:</strong> Para a Ref 1 (120g) e Ref 4 (250g), o peso é sempre fixo, independente da fruta escolhida.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extras -->
+      <div class="accordion" id="acc-extras">
+        <button class="accordion-trigger" role="button" aria-expanded="false" tabindex="0">
+          <span>🥜</span> Extras
+          <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <p class="accordion-hint">Para trocar as 15g de sementes do Café da Manhã (Ref 1)</p>
+
+            <div class="tier tier-green">
+              <div class="tier-label">🟢 Opções</div>
+              <ul class="tier-items">
+                <li class="tier-item"><span class="item-name">Pasta de Amendoim</span><span class="item-qty">25g</span></li>
+                <li class="tier-item"><span class="item-name">Queijo Muçarela</span><span class="item-qty">30g</span></li>
+                <li class="tier-item"><span class="item-name">Queijo Ricota</span><span class="item-qty">60g</span></li>
+                <li class="tier-item"><span class="item-name">Amêndoas</span><span class="item-qty">18g</span></li>
+                <li class="tier-item"><span class="item-name">Castanha do Pará</span><span class="item-qty">4 un</span></li>
+                <li class="tier-item"><span class="item-name">Castanha de Caju</span><span class="item-qty">15g</span></li>
+                <li class="tier-item"><span class="item-name">Azeite de Oliva</span><span class="item-qty">10ml</span></li>
+                <li class="tier-item"><span class="item-name">Coco Seco</span><span class="item-qty">30g</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ── Daily checkbox persistence ──
+      const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const STORAGE_KEY = 'nutri-check-' + today;
+
+      function loadChecks() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) return JSON.parse(raw);
+        } catch(e) {}
+        // Clean up old days
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('nutri-check-') && k !== STORAGE_KEY) localStorage.removeItem(k);
+        }
+        return {};
+      }
+
+      function saveChecks() {
+        const state = {};
+        meals.forEach((m, i) => {
+          const cb = m.querySelector('.meal-check input');
+          if (cb.checked) state[i] = true;
+        });
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+      }
+
+      function updateProgress() {
+        const done = document.querySelectorAll('.meal.done').length;
+        document.getElementById('done-count').textContent = done;
+        document.getElementById('progress-fill').style.width = (done / 5 * 100) + '%';
+      }
+
+      // ── Tab switching ──
+      const tabs = document.querySelectorAll('.tab');
+      const panels = document.querySelectorAll('.panel');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+          panels.forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          tab.setAttribute('aria-selected', 'true');
+          document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+        });
+      });
+
+      // ── Meal card toggle ──
+      function toggleMeal(meal) {
+        const wasOpen = meal.classList.contains('open');
+        meal.classList.toggle('open');
+        meal.querySelector('.meal-header').setAttribute('aria-expanded', String(!wasOpen));
+      }
+
+      document.querySelectorAll('.meal-header').forEach(header => {
+        header.addEventListener('click', () => toggleMeal(header.closest('.meal')));
+        header.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMeal(header.closest('.meal')); } });
+      });
+
+      // ── Checkbox handling ──
+      const meals = document.querySelectorAll('.meal');
+      const saved = loadChecks();
+
+      meals.forEach((meal, i) => {
+        const cb = meal.querySelector('.meal-check input');
+        // Restore saved state
+        if (saved[i]) {
+          cb.checked = true;
+          meal.classList.add('done');
+        }
+        cb.addEventListener('change', () => {
+          meal.classList.toggle('done', cb.checked);
+          saveChecks();
+          updateProgress();
+        });
+      });
+
+      updateProgress();
+
+      // ── Accordion toggle ──
+      function toggleAcc(acc) {
+        const wasOpen = acc.classList.contains('open');
+        acc.classList.toggle('open');
+        acc.querySelector('.accordion-trigger').setAttribute('aria-expanded', String(!wasOpen));
+      }
+
+      document.querySelectorAll('.accordion-trigger').forEach(trigger => {
+        trigger.addEventListener('click', () => toggleAcc(trigger.closest('.accordion')));
+        trigger.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAcc(trigger.closest('.accordion')); } });
+      });
+
+      // ── Cross-links ──
+      document.querySelectorAll('.sub-link').forEach(link => {
+        link.addEventListener('click', () => {
+          const target = link.dataset.goto;
+          tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+          panels.forEach(p => p.classList.remove('active'));
+          document.querySelector('[data-tab="subs"]').classList.add('active');
+          document.querySelector('[data-tab="subs"]').setAttribute('aria-selected', 'true');
+          document.getElementById('panel-subs').classList.add('active');
+          const acc = document.getElementById('acc-' + target);
+          if (acc && !acc.classList.contains('open')) toggleAcc(acc);
+          setTimeout(() => acc.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+        });
+      });
+
+      // ── Auto-expand nearest meal ──
+      const now = new Date();
+      const currentHour = now.getHours() + now.getMinutes() / 60;
+      let closest = meals[0], minDiff = Infinity;
+      meals.forEach(m => {
+        const h = parseFloat(m.dataset.hour);
+        const diff = Math.abs(currentHour - h);
+        if (diff < minDiff) { minDiff = diff; closest = m; }
+      });
+      toggleMeal(closest);
+    })();
+  </script>
+</body>
+</html>
