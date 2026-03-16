@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#e8eaef">
   <title>Plano Nutricional</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
   <style>
     :root {
       --bg: #e8eaef;
@@ -391,9 +392,6 @@
       transition: background 0.15s;
     }
 
-    .tier-item:nth-child(odd) {
-      background: var(--accent-light);
-    }
 
     .tier-item .item-name { flex: 1; }
     .tier-item .item-qty {
@@ -837,33 +835,6 @@
 
             <div class="reminder">
               <strong>Lembrete:</strong> Para a Ref 1 (120g) e Ref 4 (250g), o peso é sempre fixo, independente da fruta escolhida.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Extras -->
-      <div class="accordion" id="acc-extras">
-        <button class="accordion-trigger" role="button" aria-expanded="false" tabindex="0">
-          <span>🥜</span> Extras
-          <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="accordion-body">
-          <div class="accordion-content">
-            <p class="accordion-hint">Para trocar as 15g de sementes do Café da Manhã (Ref 1)</p>
-
-            <div class="tier tier-green">
-              <div class="tier-label">🟢 Opções</div>
-              <ul class="tier-items">
-                <li class="tier-item"><span class="item-name">Pasta de Amendoim</span><span class="item-qty">25g</span></li>
-                <li class="tier-item"><span class="item-name">Queijo Muçarela</span><span class="item-qty">30g</span></li>
-                <li class="tier-item"><span class="item-name">Queijo Ricota</span><span class="item-qty">60g</span></li>
-                <li class="tier-item"><span class="item-name">Amêndoas</span><span class="item-qty">18g</span></li>
-                <li class="tier-item"><span class="item-name">Castanha do Pará</span><span class="item-qty">4 un</span></li>
-                <li class="tier-item"><span class="item-name">Castanha de Caju</span><span class="item-qty">15g</span></li>
-                <li class="tier-item"><span class="item-name">Azeite de Oliva</span><span class="item-qty">10ml</span></li>
-                <li class="tier-item"><span class="item-name">Coco Seco</span><span class="item-qty">30g</span></li>
-              </ul>
             </div>
           </div>
         </div>
