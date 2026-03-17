@@ -534,6 +534,8 @@
       padding-left: 28px;
     }
 
+    .hidden { display: none !important; }
+
     .panel-subtitle {
       font-size: 0.7rem;
       font-weight: 700;
@@ -559,9 +561,37 @@
       <p class="section-title">Suas 5 refeições</p>
       <div class="progress-wrap">
         <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-        <span class="progress-label"><span class="done-count" id="done-count">0</span>/5</span>
+        <span class="progress-label"><span class="done-count" id="done-count">0</span>/<span id="total-count">5</span></span>
       </div>
       <div class="timeline">
+
+        <!-- Feedback Semanal (visível apenas no dia configurado) -->
+        <div class="meal meal-feedback hidden" data-hour="7">
+          <div class="meal-dot"></div>
+          <div class="meal-header" role="button" aria-expanded="false" tabindex="0">
+            <span class="meal-emoji">📸</span>
+            <div class="meal-info">
+              <div class="meal-time">Antes do café — em jejum</div>
+              <div class="meal-name">Feedback Semanal</div>
+            </div>
+            <label class="meal-check" onclick="event.stopPropagation()">
+              <input type="checkbox" aria-label="Marcar feedback semanal como feito">
+              <span class="checkmark"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
+            </label>
+            <svg class="meal-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meal-body">
+            <div class="meal-content">
+              <ul>
+                <li>Envie o <span class="qty">feedback semanal</span></li>
+              </ul>
+              <div class="callout" style="--callout-bg:#f0fdfa; --callout-border:#0d9488;">
+                <div class="callout-title">⚠️ Faça em jejum</div>
+                Antes de comer qualquer coisa. Toda sexta-feira, registre sua evolução para acompanhar seu progresso.
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Ref 1 -->
         <div class="meal" data-hour="8">
@@ -837,6 +867,16 @@
 
   <script>
     (function() {
+      // ── Configuração ──
+      const FEEDBACK_DAY = 2; // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb
+
+      // ── Feedback semanal: mostrar só no dia configurado ──
+      const todayDow = new Date().getDay();
+      const feedbackMeal = document.querySelector('.meal-feedback');
+      if (todayDow === FEEDBACK_DAY) {
+        feedbackMeal.classList.remove('hidden');
+      }
+
       // ── Daily checkbox persistence ──
       const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
       const STORAGE_KEY = 'nutri-check-' + today;
@@ -864,9 +904,11 @@
       }
 
       function updateProgress() {
-        const done = document.querySelectorAll('.meal.done').length;
+        const total = document.querySelectorAll('.meal:not(.hidden)').length;
+        const done = document.querySelectorAll('.meal:not(.hidden).done').length;
         document.getElementById('done-count').textContent = done;
-        document.getElementById('progress-fill').style.width = (done / 5 * 100) + '%';
+        document.getElementById('total-count').textContent = total;
+        document.getElementById('progress-fill').style.width = (done / total * 100) + '%';
       }
 
       // ── Tab switching ──
